@@ -1,0 +1,33 @@
+version: "3.9"
+services:
+  user1:
+    container_name: user1
+    build:
+      context: ./docker
+    volumes:
+      - Matt_daemon:/app
+    privileged: true
+    networks:
+      - net
+
+  # user2:
+  #   container_name: user2
+  #   build:
+  #     context: ./docker
+  #   volumes:
+  #     - Matt_daemon:/app
+  #   privileged: true
+  #   networks:
+  #     - net
+
+volumes:
+ Matt_daemon:
+   driver: local
+   driver_opts:
+     type: none
+     device: .
+     o: bind
+
+networks:
+  net:
+    driver: bridge

@@ -88,12 +88,6 @@ void MattDaemon::setupLockFile() {
     logger.logMessage("[INFO]", " Lock file created in /var/lock/");
 }
 
-
-
-
-
-
-
 void MattDaemon::setupServer() {
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1) {
