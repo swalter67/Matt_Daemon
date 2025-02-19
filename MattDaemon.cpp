@@ -109,7 +109,7 @@ void MattDaemon::setupServer() {
         exit(EXIT_FAILURE);
     }
     listen(server_fd, 3);
-    logger.logMessage("","Server is listening on port " + std::to_string(PORT));
+    logger.logMessage("INFO","Server is listening on port " + std::to_string(PORT));
 }
 
 
@@ -190,7 +190,10 @@ void MattDaemon::run() {
                                 FD_CLR(fd, &active_fd_set);
                                 client_count--;
                                 shutdown(server_fd, SHUT_RDWR);
-                                
+
+                            // a verifer si on kill ?
+
+                                MattDaemon::~MattDaemon();
                                 exit(0);
                             }
 

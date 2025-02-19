@@ -25,8 +25,8 @@ void Tintin_reporter::openLog(){
 std::string Tintin_reporter::getTimestamp() {
     time_t now = time(nullptr);
     struct tm *timeinfo = localtime(&now);
-    char buffer[20];
-    strftime(buffer, sizeof(buffer), "[%d/%m/%Y - %H:%M:%S]", timeinfo);
+    char buffer[100];
+    strftime(buffer, sizeof(buffer), "[%d/%m/%Y - %H:%M:%S ]", timeinfo);
     return std::string(buffer);
 }
 
