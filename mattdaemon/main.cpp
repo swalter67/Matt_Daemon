@@ -12,9 +12,9 @@ int main() {
         std::cerr << "Error: MattDaemon must be run as root!" << std::endl;
         return EXIT_FAILURE;
     }
-   // signal(SIGINT, sig_handler);
-   // signal(SIGQUIT, sig_handler);
-    //signal(SIGTERM, sig_handler);
+//    signal(SIGINT, sig_handler);
+//    signal(SIGQUIT, sig_handler);
+//     signal(SIGTERM, sig_handler);
 
     MattDaemon daemon;
     daemon.run();
