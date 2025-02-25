@@ -22,7 +22,7 @@ MattDaemon::MattDaemon() : lock_fd(-1), server_fd(-1)
     if (access(LOCK_FILE, F_OK) == 0)
     {
         std::cerr << "[ERROR] Another instance of MattDaemon is already running." << std::endl;
-        logger.logMessage("[ERROR]", " Another instance of MattDaemon is already running.");
+        logger.logMessage("ERROR", " Another instance of MattDaemon is already running.");
         exit(EXIT_FAILURE);
     }
     this->keys = RSA_generate_key(KEY_LENGTH, PUB_EXP, NULL, NULL);
@@ -31,26 +31,22 @@ MattDaemon::MattDaemon() : lock_fd(-1), server_fd(-1)
     #ifdef LOG
         this->myfile.open("key.me");
     #endif
-    daemonize();
-    setupLockFile();
-    setupServer();
+    this->daemonize();
+    this->setupLockFile();
+    this->setupServer();
 }
 
 MattDaemon::~MattDaemon()
 {
-    logger.logMessage("[INFO]", " Daemon shutting down.");
+    logger.logMessage("INFO", " Daemon shutting down.");
 
     if (lock_fd != -1)
     {
         close(lock_fd);
         if (unlink(LOCK_FILE) == 0)
-        {
-            logger.logMessage("[INFO]", " Lock file deleted.");
-        }
+            logger.logMessage("INFO", " Lock file deleted.");
         else
-        {
-            logger.logMessage("[ERROR]", "Failed to delete lock file.");
-        }
+            logger.logMessage("ERROR", "Failed to delete lock file.");
     }
     delete this->clients_keys;
     if (server_fd != -1)
@@ -113,6 +109,7 @@ void MattDaemon::decrypt_message(char *from, int fromlen, char *to)
 MattDaemon::MattDaemon(const MattDaemon  &src){
     this->lock_fd = src.lock_fd;
     this->server_fd = src.server_fd;
+    this->client_count = src.client_count;
 }
 
 MattDaemon& MattDaemon::operator=(const MattDaemon &src){
@@ -144,26 +141,26 @@ void MattDaemon::setupLockFile()
     {
         if (mkdir("/var/lock", 0755) == -1)
         {
-            logger.logMessage("[ERROR]", "Unable to create /var/lock/ directory.");
+            logger.logMessage("ERROR", "Unable to create /var/lock/ directory.");
             exit(EXIT_FAILURE);
         }
     }
     lock_fd = open(LOCK_FILE, O_CREAT | O_RDWR, 0644);
     if (lock_fd == -1)
     {
-        logger.logMessage("[ERROR]", "Cannot create lock file in /var/lock/");
+        logger.logMessage("ERROR", "Cannot create lock file in /var/lock/");
         exit(EXIT_FAILURE);
     }
 
     // Vérification si une autre instance tourne déjà
     if (lockf(lock_fd, F_TLOCK, 0) == -1)
     {
-        logger.logMessage("[ERROR]", " Another instance of MattDaemon is already running.");
+        logger.logMessage("ERROR", " Another instance of MattDaemon is already running.");
         std::cerr << "[ERROR] Another instance of MattDaemon is already running." << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    logger.logMessage("[INFO]", " Lock file created in /var/lock/");
+    logger.logMessage("INFO", " Lock file created in /var/lock/");
 }
 
 void MattDaemon::setupServer()
