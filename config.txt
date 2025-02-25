@@ -1,4 +1,0 @@
-SMTP_USERNAME=mattdaemonmulhouse@gmail.com
-SMTP_PASSWORD=upht ymln yzoe mndc
-SMTP_SERVER=smtp://smtp.gmail.com:587
-SMTP_MAIL_FROM=<mattdaemonmulhouse@gmail.com>
