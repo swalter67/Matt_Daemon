@@ -19,6 +19,10 @@
 #include <fstream>
 #include "Tintin_reporter.hpp"
 #include <map>
+
+#include <stdlib.h>
+#include "Mail.hpp"
+
 #define LOCK_FILE "/var/lock/matt_daemon.lock"
 #define LOG_DIR "/var/log/matt_daemon/"
 #define LOG_FILE "matt_daemon.log"
@@ -36,6 +40,8 @@ class MattDaemon
     public:
         MattDaemon();
         ~MattDaemon();
+        MattDaemon(const MattDaemon &src);
+        MattDaemon& operator=(const MattDaemon& src);
         void run();
 
     private:
@@ -61,5 +67,4 @@ class MattDaemon
         RSA *keys;
         std::map<int, RSA *> *clients_keys;
 };
-
-#endif // MATTDAEMON_HPP
+#endif

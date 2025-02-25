@@ -28,9 +28,9 @@ MattDaemon::MattDaemon() : lock_fd(-1), server_fd(-1)
     this->keys = RSA_generate_key(KEY_LENGTH, PUB_EXP, NULL, NULL);
     this->clients_keys = new std::map<int, RSA *>;
     this->client_count = 0;
-#ifdef LOG
-    this->myfile.open("key.me");
-#endif
+    #ifdef LOG
+        this->myfile.open("key.me");
+    #endif
     daemonize();
     setupLockFile();
     setupServer();
@@ -111,8 +111,20 @@ void MattDaemon::decrypt_message(char *from, int fromlen, char *to)
     RSA_private_decrypt(fromlen, (unsigned char *)from, (unsigned char *)to, this->keys, RSA_PKCS1_OAEP_PADDING);
 }
 
-void MattDaemon::daemonize()
-{
+
+
+MattDaemon::MattDaemon(const MattDaemon  &src){
+    this->lock_fd = src.lock_fd;
+    this->server_fd = src.server_fd;
+}
+
+MattDaemon& MattDaemon::operator=(const MattDaemon &src){
+    this->lock_fd = src.lock_fd;
+    this->server_fd = src.server_fd;
+    return (*this);
+}
+
+void MattDaemon::daemonize() {
     pid_t pid = fork();
     if (pid < 0)
         exit(EXIT_FAILURE);
@@ -120,7 +132,7 @@ void MattDaemon::daemonize()
         exit(EXIT_SUCCESS);
 
     umask(0);
-    setsid(); // detach porcessus du terminal et pas de signaux SIGHUP pui sferme les entree sorties
+    setsid();   //detach porcessus du terminal et pas de signaux SIGHUP pui sferme les entree sorties
     chdir("/app");
 
     close(STDIN_FILENO);
@@ -139,7 +151,6 @@ void MattDaemon::setupLockFile()
             exit(EXIT_FAILURE);
         }
     }
-
     lock_fd = open(LOCK_FILE, O_CREAT | O_RDWR, 0644);
     if (lock_fd == -1)
     {
@@ -219,6 +230,8 @@ int MattDaemon::new_connection(fd_set *active_fd_set)
     return 0;
 }
 
+    
+
 void MattDaemon::run()
 {
 
@@ -296,23 +309,48 @@ void MattDaemon::run()
                             #endif
                         }
                         std::string message(buffer);
-                        // message.erase(message.find_last_not_of("\r\n") + 1);  // Supprimer les retours à la ligne
-                        if (!message.empty())
-                        {
+                        message.erase(message.find_last_not_of("\r\n") + 1);  // Supprimer les retours à la ligne
+
+                        if (!message.empty()) {
                             logger.logMessage("LOG", "User input: " + message);
 
                             // Vérifie si le client envoie "quit"
-                            if (message == "quit")
-                            {
+
+                            if (message.rfind("email ", 0) == 0) {  // Vérifie si le message commence par "email "
+                                std::string recipient = message.substr(6);  // Extrait l'adresse email après "email "
+
+                                if (recipient.empty()) {
+                                    std::string response = "[ERROR] Format incorrect. Utilisation : email destinataire@example.com\n";
+                                    send(fd, response.c_str(), response.size(), 0);
+                                    continue;
+                                }
+
+                                logger.logMessage("DEBUG", "Avant instanciation de Mail");
+
+                                Mail mail(logger);  // Charge la config
+
+                                logger.logMessage("DEBUG", "Après instanciation de Mail");
+
+                                // Envoi du mail avec un sujet et un message par défaut
+                                bool success = mail.send(recipient, "MattDaemon Notification", "Ceci est un email automatique envoyé par MattDaemon.", "/var/log/matt_daemon/matt_daemon.log");
+
+                                if (success) {
+                                    std::string response = "[INFO] Email envoyé à " + recipient + "\n";
+                                    send(fd, response.c_str(), response.size(), 0);
+                                    logger.logMessage("INFO", "Email envoyé avec succès à " + recipient);
+                                }
+                                else{
+                                    std::string response = "[ERROR] Échec de l'envoi de l'email.\n";
+                                    send(fd, response.c_str(), response.size(), 0);
+                                    logger.logMessage("ERROR", "Échec de l'envoi de l'email.");
+                                }
+                            }
+                            if (message == "quit") {
                                 logger.logMessage("INFO", "Received quit command. Shutting down...");
                                 close(fd);
                                 FD_CLR(fd, &active_fd_set);
                                 client_count--;
                                 shutdown(server_fd, SHUT_RDWR);
-
-                                // a verifer si on kill ?
-
-                                MattDaemon::~MattDaemon();
                                 exit(0);
                             }
 
