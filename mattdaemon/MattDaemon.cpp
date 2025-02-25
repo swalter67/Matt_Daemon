@@ -70,9 +70,6 @@ void MattDaemon::send_pubkey(int sock)
     key_sended = (char *)calloc(key_len + 1, sizeof(char));
 
     BIO_read(pub, key_sended, key_len);
-// #ifdef PRINT_KEYS
-// printf("\n%s\n", key_sended);
-// #endif
 #ifdef LOG
     myfile << key_sended << std::endl;
 #endif
@@ -222,9 +219,7 @@ int MattDaemon::new_connection(fd_set *active_fd_set)
     logger.logMessage("INFO", "New client connected.");
     FD_SET(client_socket, active_fd_set);
     if (client_socket > this->max_fd)
-    {
         this->max_fd = client_socket;
-    }
     this->client_count++; // Augmenter le nombre de clients connecté
 
     return 0;
@@ -304,13 +299,14 @@ void MattDaemon::run()
                             this->decrypt_message(buffer, bytes_received, decrypted_buffer);
                             memset(buffer, 0, BUFFER_SIZE);
                             strncpy(buffer, decrypted_buffer, strlen(decrypted_buffer));
-                            #ifdef LOG
-                                myfile << "[" << buffer << "]" << std::endl;
-                            #endif
+                            
                         }
+                        
                         std::string message(buffer);
                         message.erase(message.find_last_not_of("\r\n") + 1);  // Supprimer les retours à la ligne
-
+                        #ifdef LOG
+                            myfile << "[" << message << "]" << std::endl;
+                        #endif
                         if (!message.empty()) {
                             logger.logMessage("LOG", "User input: " + message);
 
@@ -351,12 +347,12 @@ void MattDaemon::run()
                                 FD_CLR(fd, &active_fd_set);
                                 client_count--;
                                 shutdown(server_fd, SHUT_RDWR);
-                                exit(0);
+                                return ;
                             }
 
                             // Envoyer une confirmation au client
                             std::string response = "[LOGGED] " + message + "\n";
-                            if (keys)
+                            if (pubkey)
                             {
                                 memset(buffer, 0, BUFFER_SIZE);
                                 int lsend = this->encrypt_message(response.c_str(), buffer, pubkey);

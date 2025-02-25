@@ -11,13 +11,12 @@ void BenAFK::send_pubkey(void)
     key_sended = (char *)calloc(key_len, sizeof(char));
 
     BIO_read(pub, key_sended, key_len);
-    // #ifdef PRINT_KEYS
-    //     printf("\nben key: %s\n", key_sended);
-    // #endif
+    #ifdef LOG
+        printf("\nben key: %s\n", key_sended);
+    #endif
     std::string sended(BEN_MSG);
     sended.append(key_sended);
     send(this->sock, sended.c_str(), sended.size(), 0);
-    printf("key has been send\n");
     free(key_sended);
     BIO_free(pub);
 }
@@ -31,16 +30,16 @@ void BenAFK::get_pubkey()
     BIO *bio = BIO_new_mem_buf((void *)key_readed, readoc);
     this->pub_matt = PEM_read_bio_RSAPublicKey(bio, NULL, NULL, NULL);
     BIO_free(bio);
-    // #ifdef PRINT_KEYS
-    // BIO *pub2 = BIO_new(BIO_s_mem());
-    // PEM_write_bio_RSAPublicKey(pub2, this->pub_matt);
-    // int key_len = BIO_pending(pub2);
-    // char *pub_key = (char *)calloc(key_len + 1, 1);
-    // BIO_read(pub2, pub_key, key_len);
+    #ifdef LOG
+        BIO *pub2 = BIO_new(BIO_s_mem());
+        PEM_write_bio_RSAPublicKey(pub2, this->pub_matt);
+        int key_len = BIO_pending(pub2);
+        char *pub_key = (char *)calloc(key_len + 1, 1);
+        BIO_read(pub2, pub_key, key_len);
 
-    // pub_key[key_len] = '\0';
-    // printf("len :%d [%s]", key_len, pub_key);
-    // #endif
+        pub_key[key_len] = '\0';
+        printf("len :%d [%s]", key_len, pub_key);
+    #endif
 }
 
 int BenAFK::encrypt_message(const char *from, int fromlen, char *to)
@@ -138,14 +137,14 @@ void BenAFK::run() {
             msg[strlen(msg)-1] = '\0';
             int len = this->encrypt_message(msg, strlen(msg), to_send);
             send(this->sock, to_send, len, 0);
-            int rlen = recv(this->sock, rbuffer, BUFFER_SIZE, O_NONBLOCK);
+            int rlen = recv(this->sock, rbuffer, BUFFER_SIZE, 0);
             if (rlen > 0)
             {
                 memset(msg, 0, KEY_LENGTH);
                 this->decrypt_message(rbuffer, rlen, msg);
                 this->add_to_log(msg);
             }
-            if (strcmp(msg, "quit") == 0)
+            if (strcmp(msg, "quit") == 0 || rlen <= 0)
                 break;
             memset(msg, 0, BUFFER_SIZE);
         }
