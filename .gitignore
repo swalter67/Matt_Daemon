@@ -1,0 +1,5 @@
+config.txt
+*.o
+test.cpp
+test_mail.cpp
+piecejoint.cpp
