@@ -25,6 +25,8 @@ class MattDaemon {
 public:
     MattDaemon();
     ~MattDaemon();
+    MattDaemon(const MattDaemon &src);
+    MattDaemon& operator=(const MattDaemon& src);
     void run();
 
 private:
@@ -32,7 +34,6 @@ private:
     void setupLockFile();
     void setupServer();
     
-    ///void signalHandler(int signum);
     int lock_fd;
     int server_fd;
     Tintin_reporter logger;

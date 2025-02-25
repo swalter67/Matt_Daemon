@@ -13,6 +13,9 @@ class Tintin_reporter {
     public: 
         Tintin_reporter();
         ~Tintin_reporter();
+        //Tintin_reporter(const Tintin_reporter& src);
+        //Tintin_reporter& operator=(const Tintin_reporter &src);
+
         void logMessage(const std::string &level, const std::string &message);
 
     private:

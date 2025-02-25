@@ -18,7 +18,6 @@ class Mail {
 public:
     Mail( Tintin_reporter& logger);
     ~Mail();
-
     bool send(const std::string& recipient, const std::string& subject, const std::string& body, const std::string& attachmentPath);
 
 private:

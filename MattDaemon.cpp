@@ -49,6 +49,16 @@ MattDaemon::~MattDaemon() {
     }
 }
 
+MattDaemon::MattDaemon(const MattDaemon  &src){
+    this->lock_fd = src.lock_fd;
+    this->server_fd = src.server_fd;
+}
+
+MattDaemon& MattDaemon::operator=(const MattDaemon &src){
+    this->lock_fd = src.lock_fd;
+    this->server_fd = src.server_fd;
+    return (*this);
+}
 
 void MattDaemon::daemonize() {
     pid_t pid = fork();

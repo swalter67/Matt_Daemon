@@ -11,8 +11,8 @@ Mail::Mail(Tintin_reporter &logger) : logger(logger)
    
 }
 
-// Destructeur
 Mail::~Mail() {}
+
 
 // Fonction pour encoder un fichier en base64
 std::string Mail::encodeBase64(const std::string &filePath)
