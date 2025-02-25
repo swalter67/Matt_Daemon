@@ -3,7 +3,6 @@
 
 # include "../mattdaemon/MattDaemon.hpp"
 
-# define BUFFER_SIZE 2048
 # define MAX_DISAPLY 50
 
 class BenAFK {
@@ -18,12 +17,12 @@ class BenAFK {
         BenAFK& operator=(const BenAFK& src);
         ~BenAFK();
         void display();
+        void run(void);
         void get_pubkey();
         void add_to_log(char *log);
         int encrypt_message(const char *from, int fromlen, char *to);
         void decrypt_message(char* from , int fromlen, char *to);
         void send_pubkey(void);
-        void run();
 };
 
 #endif
