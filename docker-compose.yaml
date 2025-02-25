@@ -7,18 +7,6 @@ services:
     volumes:
       - Matt_daemon:/app
     privileged: true
-    networks:
-      - net
-
-  user2:
-    container_name: user2
-    build:
-      context: ./docker
-    volumes:
-      - Matt_daemon:/app
-    privileged: true
-    networks:
-      - net
 
 volumes:
  Matt_daemon:
@@ -27,7 +15,3 @@ volumes:
      type: none
      device: .
      o: bind
-
-networks:
-  net:
-    driver: bridge
