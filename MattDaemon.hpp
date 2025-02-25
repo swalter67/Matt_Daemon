@@ -14,6 +14,7 @@
 #include <signal.h>
 
 #include "Tintin_reporter.hpp"
+#include "Mail.hpp"
 
 #define LOCK_FILE "/var/lock/matt_daemon.lock"
 #define LOG_DIR "/var/log/matt_daemon/"

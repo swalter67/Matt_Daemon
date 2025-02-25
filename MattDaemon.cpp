@@ -70,29 +70,20 @@ void MattDaemon::setupLockFile() {
             exit(EXIT_FAILURE);
         }
     }
-
-    
+   
     lock_fd = open(LOCK_FILE, O_CREAT | O_RDWR, 0644);
     if (lock_fd == -1) {
         logger.logMessage("[ERROR]", "Cannot create lock file in /var/lock/");
         exit(EXIT_FAILURE);
     }
-
     // Vérification si une autre instance tourne déjà
     if (lockf(lock_fd, F_TLOCK, 0) == -1) {
         logger.logMessage("[ERROR]"," Another instance of MattDaemon is already running.");
         std::cerr << "[ERROR] Another instance of MattDaemon is already running." << std::endl;
         exit(EXIT_FAILURE);
     }
-
-    logger.logMessage("[INFO]", " Lock file created in /var/lock/");
+    logger.logMessage("INFO", " Lock file created in /var/lock/");
 }
-
-
-
-
-
-
 
 void MattDaemon::setupServer() {
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -123,6 +114,9 @@ void MattDaemon::run() {
     socklen_t client_len = sizeof(client_addr);
     char buffer[1024];
 
+
+    signal(SIGTERM, signalHandler);
+    signal(SIGINT, signalHandler);
     logger.logMessage("INFO", "Daemon is running and listening for connections...");
 
     fd_set active_fd_set, read_fd_set;
@@ -184,6 +178,41 @@ void MattDaemon::run() {
                             logger.logMessage("LOG", "User input: " + message);
 
                             // Vérifie si le client envoie "quit"
+
+                            if (message.rfind("email ", 0) == 0) {  // Vérifie si le message commence par "email "
+    std::string recipient = message.substr(6);  // Extrait l'adresse email après "email "
+
+    if (recipient.empty()) {
+        std::string response = "[ERROR] Format incorrect. Utilisation : email destinataire@example.com\n";
+        send(fd, response.c_str(), response.size(), 0);
+        continue;
+    }
+
+    logger.logMessage("DEBUG", "Avant instanciation de Mail");
+
+    Mail mail("config.txt", logger);  // Charge la config
+
+    logger.logMessage("DEBUG", "Après instanciation de Mail");
+
+    // Envoi du mail avec un sujet et un message par défaut
+    bool success = mail.send(recipient, "MattDaemon Notification", "Ceci est un email automatique envoyé par MattDaemon.", "/var/log/matt_daemon/matt_daemon.log");
+
+    if (success) {
+        std::string response = "[INFO] Email envoyé à " + recipient + "\n";
+        send(fd, response.c_str(), response.size(), 0);
+        logger.logMessage("INFO", "Email envoyé avec succès à " + recipient);
+    } else {
+        std::string response = "[ERROR] Échec de l'envoi de l'email.\n";
+        send(fd, response.c_str(), response.size(), 0);
+        logger.logMessage("ERROR", "Échec de l'envoi de l'email.");
+    }
+}
+
+
+
+
+
+
                             if (message == "quit") {
                                 logger.logMessage("INFO", "Received quit command. Shutting down...");
                                 close(fd);
