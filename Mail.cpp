@@ -1,38 +1,25 @@
 #include "Mail.hpp"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/buffer.h>
-#include <cstring>
-#include <fstream>
-#include <map>
-#include <iostream>
-#include <curl/curl.h>
-#
 
-Mail::Mail(const std::string& configFile, Tintin_reporter& logger) : logger(logger) {
-// Constructeur
-logger.logMessage("DEBUG", "Chargement de la configuration depuis " + configFile);
-    //std::map<std::string, std::string> config = loadConfig(configFile);
+
+Mail::Mail(Tintin_reporter &logger) : logger(logger)
+{
     
-    //if (config.empty()) {
-    //    logger.logMessage( "Erreur" , ": Impossible de charger les paramètres SMTP depuis " );
-    //} else {
-        sender_email = "mattdaemonmulhouse@gmail.com";
-        sender_password = "upht ymln yzoe mndc";
-        smtp_server = "smtp://smtp.gmail.com:587";
-    //}
+    logger.logMessage("INFO", "Chargement de la configuration" );
+    sender_email = "mattdaemonmulhouse@gmail.com";
+    sender_password = "upht ymln yzoe mndc";
+    smtp_server = "smtp://smtp.gmail.com:587";
+   
 }
 
 // Destructeur
 Mail::~Mail() {}
 
 // Fonction pour encoder un fichier en base64
-std::string Mail::encodeBase64(const std::string& filePath) {
+std::string Mail::encodeBase64(const std::string &filePath)
+{
     std::ifstream file(filePath, std::ios::binary);
-    if (!file) {
+    if (!file)
+    {
         std::cerr << "Erreur : Impossible d'ouvrir le fichier " << filePath << std::endl;
         return "";
     }
@@ -52,15 +39,16 @@ std::string Mail::encodeBase64(const std::string& filePath) {
     BIO_write(bio, fileData.data(), fileData.size());
     BIO_flush(bio);
     BIO_get_mem_ptr(bio, &bufferPtr);
-    
+
     std::string encodedData(bufferPtr->data, bufferPtr->length);
     BIO_free_all(bio);
-    
+
     return encodedData;
 }
 
 // Générer un email MIME avec une pièce jointe
-std::string Mail::createMimeMessage(const std::string& recipient, const std::string& subject, const std::string& body, const std::string& attachmentPath) {
+std::string Mail::createMimeMessage(const std::string &recipient, const std::string &subject, const std::string &body, const std::string &attachmentPath)
+{
     std::string boundary = "boundary123";
     std::string base64File = encodeBase64(attachmentPath);
     std::string filename = attachmentPath.substr(attachmentPath.find_last_of('/') + 1);
@@ -85,9 +73,11 @@ std::string Mail::createMimeMessage(const std::string& recipient, const std::str
 }
 
 // Fonction de lecture du payload
-size_t Mail::payload_source(void* ptr, size_t size, size_t nmemb, void* userp) {
-    std::string* payload = static_cast<std::string*>(userp);
-    if (payload->empty()) return 0;
+size_t Mail::payload_source(void *ptr, size_t size, size_t nmemb, void *userp)
+{
+    std::string *payload = static_cast<std::string *>(userp);
+    if (payload->empty())
+        return 0;
 
     size_t copy_size = size * nmemb < payload->size() ? size * nmemb : payload->size();
     memcpy(ptr, payload->c_str(), copy_size);
@@ -96,13 +86,15 @@ size_t Mail::payload_source(void* ptr, size_t size, size_t nmemb, void* userp) {
 }
 
 // Fonction d'envoi de l'e-mail
-bool Mail::send(const std::string& recipient, const std::string& subject, const std::string& body, const std::string& attachmentPath) {
-    CURL* curl;
+bool Mail::send(const std::string &recipient, const std::string &subject, const std::string &body, const std::string &attachmentPath)
+{
+    CURL *curl;
     CURLcode res = CURLE_OK;
-    struct curl_slist* recipients = nullptr;
+    struct curl_slist *recipients = nullptr;
 
     // Vérifier que les paramètres SMTP sont chargés
-    if (sender_email.empty() || sender_password.empty() || smtp_server.empty()) {
+    if (sender_email.empty() || sender_password.empty() || smtp_server.empty())
+    {
         std::cerr << "Erreur : Les paramètres SMTP ne sont pas correctement chargés." << std::endl;
         return false;
     }
@@ -112,7 +104,8 @@ bool Mail::send(const std::string& recipient, const std::string& subject, const 
 
     // Initialiser cURL
     curl = curl_easy_init();
-    if (!curl) {
+    if (!curl)
+    {
         std::cerr << "Erreur : Impossible d'initialiser cURL." << std::endl;
         return false;
     }
@@ -146,58 +139,12 @@ bool Mail::send(const std::string& recipient, const std::string& subject, const 
     curl_slist_free_all(recipients);
     curl_easy_cleanup(curl);
 
-    if (res != CURLE_OK) {
-        logger.logMessage( "log",  "Erreur d'envoi de l'e-mail : \n" );
+    if (res != CURLE_OK)
+    {
+        logger.logMessage("log", "Erreur d'envoi de l'e-mail : \n");
         return false;
     }
 
-    logger.logMessage( "log",  "envoi de l'e-mail : ok\n" );
+    logger.logMessage("log", "envoi de l'e-mail : ok\n");
     return true;
-}
-
-// Fonction pour charger les paramètres depuis un fichier `config.txt`
-std::map<std::string, std::string> Mail::loadConfig(const std::string& filename) {
-    std::map<std::string, std::string> config;
-    std::ifstream file(filename);
-
-    if (!file) {
-        logger.logMessage("ERROR", "Impossible d'ouvrir le fichier de configuration : " + filename);
-        return config; // Retourne un map vide
-    }
-
-    std::string line;
-    while (std::getline(file, line)) {
-        // Ignorer les lignes vides
-        if (line.empty()) continue;
-
-        // Vérifier si la ligne contient un '=' pour séparer clé et valeur
-        size_t pos = line.find('=');
-        if (pos != std::string::npos) {
-            std::string key = line.substr(0, pos);
-            std::string value = line.substr(pos + 1);
-            
-            // Supprimer les espaces éventuels autour des valeurs
-            key.erase(0, key.find_first_not_of(" \t\r\n"));
-            key.erase(key.find_last_not_of(" \t\r\n") + 1);
-            value.erase(0, value.find_first_not_of(" \t\r\n\""));  // Supprime les guillemets éventuels
-            value.erase(value.find_last_not_of(" \t\r\n\"") + 1);  // Supprime les guillemets éventuels
-
-            config[key] = value;
-            
-            // 🔹 Logger chaque clé et valeur ajoutée
-            logger.logMessage("DEBUG", "Paramètre chargé : " + key + " = " + value);
-        } else {
-            logger.logMessage("WARNING", "Ligne incorrecte ignorée dans config.txt : " + line);
-        }
-    }
-
-    file.close();
-
-    if (config.empty()) {
-        logger.logMessage("ERROR", "Le fichier de configuration est vide ou mal formaté.");
-    } else {
-        logger.logMessage("INFO", "Fichier de configuration chargé avec succès.");
-    }
-
-    return config;
 }

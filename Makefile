@@ -34,5 +34,4 @@ fclean: clean
 # Recompilation complète
 re: fclean all
 
-test_mail: test_mail.cpp Mail.o
-	$(CC) $(CFLAGS) -o test_mail test_mail.cpp Mail.o -lcurl -lssl -lcrypto
+

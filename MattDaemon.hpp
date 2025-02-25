@@ -12,7 +12,7 @@
 #include <arpa/inet.h>
 #include <ctime> 
 #include <signal.h>
-
+#include <stdlib.h>
 #include "Tintin_reporter.hpp"
 #include "Mail.hpp"
 
@@ -38,4 +38,4 @@ private:
     Tintin_reporter logger;
 };
 
-#endif // MATTDAEMON_HPP
+#endif
