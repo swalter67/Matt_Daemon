@@ -2,21 +2,29 @@
 #include <sys/stat.h>
 #include <iomanip>
 
-Tintin_reporter::Tintin_reporter(){
+Tintin_reporter::Tintin_reporter() {
     openLog();
 }
 
-Tintin_reporter::~Tintin_reporter(){
+Tintin_reporter::~Tintin_reporter() {
     if(logFile.is_open()) {
         logFile.close();
     }
 }
 
-void Tintin_reporter::openLog(){
-    mkdir(LOG_DIR, 0755);
+Tintin_reporter::Tintin_reporter(const Tintin_reporter& src) {
+
+}
+
+Tintin_reporter& Tintin_reporter::operator=(const Tintin_reporter &src) {
+    return (*this);
+}
+
+void Tintin_reporter::openLog() {
+    mkdir(LOG_DIR, 0666);
 
     logFile.open(std::string(LOG_DIR) + LOG_FILE, std::ios::app);
-    if(!logFile.is_open()){
+    if(!logFile.is_open()) {
         std::cerr << "[ERROR] Unable to open log file!" << std::endl;
 
     }
@@ -30,7 +38,8 @@ std::string Tintin_reporter::getTimestamp() {
     return std::string(buffer);
 }
 
-void Tintin_reporter::logMessage(const std::string &level, const std::string &message) {
+void Tintin_reporter::logMessage(const std::string &level, const std::string &message)
+{
     if (logFile.is_open()) {
         logFile << getTimestamp() << " [" << level << "] " << message << std::endl;
     } else {

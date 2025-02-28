@@ -16,9 +16,13 @@
 
 class Mail {
 public:
+    Mail();
     Mail( Tintin_reporter& logger);
     ~Mail();
     bool send(const std::string& recipient, const std::string& subject, const std::string& body, const std::string& attachmentPath);
+
+    Mail(const Mail& src);
+    Mail& operator=(const Mail &src);
 
 private:
     
@@ -31,7 +35,7 @@ private:
     std::string sender_password;   // Mot de passe de l'expéditeur
     std::string smtp_server;       // Serveur SMTP utilisé pour l'envoi
     std::string email_payload;     // Contenu de l'email encodé
-    Tintin_reporter& logger;
+    Tintin_reporter logger;
 };
 
 #endif // MAIL_HPP

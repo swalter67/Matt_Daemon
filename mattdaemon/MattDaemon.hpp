@@ -12,12 +12,10 @@
 #include <arpa/inet.h>
 #include <ctime>
 #include <signal.h>
+#include <exception>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
 
-#include <iostream>
-#include <fstream>
-#include "Tintin_reporter.hpp"
 #include <map>
 
 #include <stdlib.h>
@@ -38,8 +36,10 @@
 class MattDaemon
 {
     public:
+        void throw_err(const std::string &err_msg);
         MattDaemon();
         ~MattDaemon();
+        void exchange_pub_key(int sock, char *buffer, int bsize);
         MattDaemon(const MattDaemon &src);
         MattDaemon& operator=(const MattDaemon& src);
         void run();
@@ -49,18 +49,22 @@ class MattDaemon
         void setupLockFile();
         void setupServer();
 
-        void get_pub_key_from_client(int sock, char *buffer, int bsize);
         RSA *get_keys_by_sock(int sock);
         int encrypt_message(const char *message, char *buffer, RSA *pubkey);
         void decrypt_message(char *from, int fromlen, char *to);
-        int new_connection(fd_set *active_fd_set);
-        void send_pubkey(int sock);
+        void new_connection(fd_set *active_fd_set);
+        void disconnected_client(int fd, fd_set *active_fd_set);
+        void mail_process(int fd, std::string recipient);
+        void quit_process(int fd, fd_set *active_fd_set);
+        void process_buffer(char *buffer, int fd, char *decrypted_buffer, fd_set *active_fd_set);
         /// void signalHandler(int signum);
         int lock_fd;
         int server_fd;
+        int sucess;
         int max_fd;
         int client_count; // Nombre de clients connectés
         Tintin_reporter logger;
+        Mail mail;
         #ifdef LOG
             std::ofstream      myfile;
         #endif

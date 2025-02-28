@@ -6,6 +6,7 @@ services:
       context: ./docker
     volumes:
       - Matt_daemon:/app
+    env_file: .env
     privileged: true
 
 volumes:

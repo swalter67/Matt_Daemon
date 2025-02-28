@@ -1,22 +1,45 @@
 #include "Mail.hpp"
 
-
-Mail::Mail(Tintin_reporter &logger) : logger(logger)
-{
-    
-    logger.logMessage("INFO", "Chargement de la configuration" );
-    sender_email = "mattdaemonmulhouse@gmail.com";
-    sender_password = "upht ymln yzoe mndc";
-    smtp_server = "smtp://smtp.gmail.com:587";
-   
+static std::string get_env_var( std::string const & key ) {                                 
+    char * val;                                                                        
+    val = std::getenv(key.c_str());                                                       
+    std::string retval;                                                           
+    if (val != NULL)                                               
+        retval = val;                                                                     
+    return retval;                                                                  
 }
 
+Mail::Mail(Tintin_reporter &logger) : logger(logger) {
+    
+    this->sender_email = get_env_var("SENDER_MAIL");
+    this->sender_password = get_env_var("SENDER_PASSWORD");
+    this->smtp_server = get_env_var("SMTP_SERVER");
+    if (this->sender_email.empty() || this->sender_password.empty() || this->smtp_server.empty())
+        logger.logMessage("ERROR", "Chargement de la configuration échoué");
+    else
+        logger.logMessage("INFO", "Chargement de la configuration réussi" );
+}
+
+Mail::Mail() {}
 Mail::~Mail() {}
 
+Mail::Mail(const Mail& src) {
+    this->sender_email = src.sender_email;
+    this->sender_password = src.sender_password;
+    this->smtp_server = src.smtp_server;
+    this->email_payload = src.email_payload;
+}
+
+Mail& Mail::operator=(const Mail &src) {
+    this->sender_email = src.sender_email;
+    this->sender_password = src.sender_password;
+    this->smtp_server = src.smtp_server;
+    this->email_payload = src.email_payload;
+    return *this;
+}
 
 // Fonction pour encoder un fichier en base64
-std::string Mail::encodeBase64(const std::string &filePath)
-{
+std::string Mail::encodeBase64(const std::string &filePath) {
     std::ifstream file(filePath, std::ios::binary);
     if (!file)
     {
@@ -47,8 +70,7 @@ std::string Mail::encodeBase64(const std::string &filePath)
 }
 
 // Générer un email MIME avec une pièce jointe
-std::string Mail::createMimeMessage(const std::string &recipient, const std::string &subject, const std::string &body, const std::string &attachmentPath)
-{
+std::string Mail::createMimeMessage(const std::string &recipient, const std::string &subject, const std::string &body, const std::string &attachmentPath) {
     std::string boundary = "boundary123";
     std::string base64File = encodeBase64(attachmentPath);
     std::string filename = attachmentPath.substr(attachmentPath.find_last_of('/') + 1);
@@ -73,8 +95,7 @@ std::string Mail::createMimeMessage(const std::string &recipient, const std::str
 }
 
 // Fonction de lecture du payload
-size_t Mail::payload_source(void *ptr, size_t size, size_t nmemb, void *userp)
-{
+size_t Mail::payload_source(void *ptr, size_t size, size_t nmemb, void *userp) {
     std::string *payload = static_cast<std::string *>(userp);
     if (payload->empty())
         return 0;
@@ -86,8 +107,7 @@ size_t Mail::payload_source(void *ptr, size_t size, size_t nmemb, void *userp)
 }
 
 // Fonction d'envoi de l'e-mail
-bool Mail::send(const std::string &recipient, const std::string &subject, const std::string &body, const std::string &attachmentPath)
-{
+bool Mail::send(const std::string &recipient, const std::string &subject, const std::string &body, const std::string &attachmentPath) {
     CURL *curl;
     CURLcode res = CURLE_OK;
     struct curl_slist *recipients = nullptr;
